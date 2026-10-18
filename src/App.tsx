@@ -108,9 +108,9 @@ export default function App() {
         {phase === 'upload' && (
           <section className="pt-10 sm:pt-16">
             <h1 className="max-w-3xl text-4xl font-medium leading-[1.05] tracking-tight sm:text-6xl">
-              Your Suno track, <span className="text-glow">finished.</span>
+              Your Suno track, <span className="text-glow">ready for streaming.</span>
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-mute">Streaming-ready loudness, a touch of air and a tighter low end — without changing the song you made.</p>
+            <p className="mt-5 max-w-xl text-lg text-mute">Carefully mastered to bring out the best in your song, ready to share with the world.</p>
             <div
               onDragOver={(e) => { e.preventDefault(); setDrag(true) }}
               onDragLeave={() => setDrag(false)}
