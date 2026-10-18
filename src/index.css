@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  --color-ink: #0a0a0b;
+  --color-panel: #121214;
+  --color-raised: #19191c;
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-mute: #8b8b93;
+  --color-glow: #ff8a3d;
+  --color-glow-soft: #ffb27a;
+  --color-good: #5ee0a0;
+  --color-warn: #f5c451;
+  --color-bad: #ff6b6b;
+}
+
+html { background: var(--color-ink); color: #ececef; font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+body { margin: 0; }
+::selection { background: rgb(255 138 61 / 0.35); }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+@keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(250%); } }

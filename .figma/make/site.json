@@ -1,0 +1,10 @@
+{
+  "description": "Master AI-generated songs with adaptive loudness and EQ tailored to genres, offering polished, balanced audio and easy upload, preview, and download.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
