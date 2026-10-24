@@ -19,7 +19,7 @@ export default function Waveform({ peaks, color, progress, dim, onSeek, height =
       let m = 0
       for (let k = a; k < b; k++) if (peaks[k] > m) m = peaks[k]
       const bh = Math.max(1, m * h)
-      ctx.fillStyle = i / bars <= progress ? color : dim ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.22)'
+      ctx.fillStyle = progress > 0 && i / bars < progress ? color : dim ? 'rgba(255,255,255,0.216)' : 'rgba(255,255,255,0.36)'
       ctx.fillRect(i * 3, (h - bh) / 2, 2, bh)
     }
   }, [peaks, color, progress, dim])
@@ -27,7 +27,7 @@ export default function Waveform({ peaks, color, progress, dim, onSeek, height =
     <canvas
       ref={ref}
       style={{ height }}
-      className={`w-full block ${onSeek ? 'cursor-pointer' : ''} transition-opacity ${dim ? 'opacity-50' : ''}`}
+      className={`w-full block ${onSeek ? 'cursor-pointer' : ''}`}
       onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); onSeek?.((e.clientX - r.left) / r.width) }}
     />
   )

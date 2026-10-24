@@ -1,17 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import Waveform from './Waveform'
 
-interface Props { original: Blob; mastered: Blob; peaksBefore: Float32Array; peaksAfter: Float32Array }
+interface Props { original: Blob; mastered: Blob; peaksBefore: Float32Array; peaksAfter: Float32Array; onStartOver: () => void; children?: ReactNode }
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
-export default function Player({ original, mastered, peaksBefore, peaksAfter }: Props) {
+export default function Player({ original, mastered, peaksBefore, peaksAfter, onStartOver, children }: Props) {
   const urls = useMemo(() => ({ a: URL.createObjectURL(original), b: URL.createObjectURL(mastered) }), [original, mastered])
   useEffect(() => () => { URL.revokeObjectURL(urls.a); URL.revokeObjectURL(urls.b) }, [urls])
   const a = useRef<HTMLAudioElement>(null), b = useRef<HTMLAudioElement>(null)
   const [src, setSrc] = useState<'a' | 'b'>('b')
   const [playing, setPlaying] = useState(false)
   const [t, setT] = useState(0), [dur, setDur] = useState(0)
+  const fadeRef = useRef<{ frame: number; from: HTMLAudioElement; to: HTMLAudioElement } | null>(null)
   const active = () => (src === 'a' ? a.current : b.current)
 
   useEffect(() => {
@@ -21,14 +22,73 @@ export default function Player({ original, mastered, peaksBefore, peaksAfter }: 
     return () => cancelAnimationFrame(raf)
   })
 
-  const switchTo = (s: 'a' | 'b') => {
-    if (s === src) return
-    const from = active(), to = s === 'a' ? a.current : b.current
-    if (!from || !to) return
-    to.currentTime = from.currentTime
-    if (playing) { from.pause(); void to.play() }
+  const changeSource = async (s: 'a' | 'b', shouldPlay: boolean) => {
+    if (fadeRef.current) {
+      cancelAnimationFrame(fadeRef.current.frame)
+      fadeRef.current.from.pause()
+      fadeRef.current.from.volume = 1
+      fadeRef.current.to.volume = 1
+      fadeRef.current = null
+    }
+    const from = active()
+    const target = s === 'a' ? a.current : b.current
+    if (!target) return
+    const currentTime = from?.currentTime ?? t
+    if (from === target) {
+      if (!shouldPlay) { target.pause(); setPlaying(false); return }
+      setPlaying(true)
+      try { await target.play() } catch { setPlaying(false) }
+      return
+    }
+
+    target.currentTime = Number.isFinite(target.duration) && target.duration > 0
+      ? Math.min(currentTime, target.duration)
+      : currentTime
+    if (!shouldPlay) {
+      from?.pause()
+      target.volume = 1
+      setSrc(s)
+      setPlaying(false)
+      return
+    }
+
+    const crossfade = Boolean(from && playing)
+    if (crossfade) target.volume = 0
+    try {
+      await target.play()
+    } catch {
+      target.volume = 1
+      if (!from) setPlaying(false)
+      return
+    }
+
     setSrc(s)
+    setPlaying(true)
+    if (!crossfade || !from) {
+      from?.pause()
+      target.volume = 1
+      return
+    }
+
+    const startedAt = performance.now()
+    const fadeDuration = 60
+    const fade = (now: number) => {
+      const amount = Math.min(1, (now - startedAt) / fadeDuration)
+      from.volume = 1 - amount
+      target.volume = amount
+      if (amount < 1) {
+        fadeRef.current = { frame: requestAnimationFrame(fade), from, to: target }
+      }
+      else {
+        from.pause()
+        from.volume = 1
+        target.volume = 1
+        fadeRef.current = null
+      }
+    }
+    fadeRef.current = { frame: requestAnimationFrame(fade), from, to: target }
   }
+  const switchTo = (s: 'a' | 'b') => { if (s !== src) void changeSource(s, playing) }
   const toggle = () => {
     const el = active()
     if (!el) return
@@ -41,34 +101,38 @@ export default function Player({ original, mastered, peaksBefore, peaksAfter }: 
     <div className="rounded-2xl border border-line bg-panel p-5">
       <audio ref={a} src={urls.a} preload="auto" onEnded={() => setPlaying(false)} />
       <audio ref={b} src={urls.b} preload="auto" onLoadedMetadata={(e) => setDur(e.currentTarget.duration)} onEnded={() => setPlaying(false)} />
-      <div className="flex items-center gap-4">
-        <button onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} className="grid size-12 shrink-0 place-items-center rounded-full bg-white text-ink transition hover:scale-105">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <span className="num text-left text-[15px] text-mute">{fmt(t)} / {fmt(dur)}</span>
+        <div className="flex items-center justify-center gap-4">
+          <button onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} className="grid size-12 shrink-0 place-items-center rounded-full bg-white text-ink transition hover:scale-105 hover:bg-zinc-200">
           {playing ? (
             <svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="1" width="3.5" height="12" rx="1" fill="currentColor" /><rect x="8.5" y="1" width="3.5" height="12" rx="1" fill="currentColor" /></svg>
           ) : (
             <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 1.5v11l9.5-5.5z" fill="currentColor" /></svg>
           )}
-        </button>
-        <div className="flex rounded-full border border-line bg-ink p-1 text-sm">
+          </button>
+          <div className="flex rounded-full border border-line bg-ink p-1 text-[15px]">
           {(['a', 'b'] as const).map((s) => (
             <button key={s} onClick={() => switchTo(s)} className={`rounded-full px-4 py-1.5 transition ${src === s ? (s === 'b' ? 'bg-glow text-ink font-medium' : 'bg-white/90 text-ink font-medium') : 'text-mute hover:text-white'}`}>
               {s === 'a' ? 'Original' : 'Mastered'}
             </button>
           ))}
+          </div>
         </div>
-        <span className="num ml-auto text-sm text-mute">{fmt(t)} / {fmt(dur)}</span>
+        <button onClick={onStartOver} className="justify-self-end rounded-full border border-line px-4 py-2 text-[15px] text-mute transition hover:border-white/20 hover:text-white">Start over</button>
       </div>
       <div className="mt-5 space-y-3">
         <div>
-          <div className="mb-1.5 text-[11px] uppercase tracking-[0.14em] text-mute">Original</div>
-          <Waveform peaks={peaksBefore} color="#d4d4d8" progress={p} dim={src !== 'a'} onSeek={seek} height={52} />
+          <div className="mb-1.5 text-[12px] uppercase tracking-[0.14em] text-mute">Original</div>
+          <Waveform peaks={peaksBefore} color="#ffffff" progress={src === 'a' ? p : 0} dim={src !== 'a'} onSeek={() => void changeSource('a', true)} height={52} />
         </div>
         <div>
-          <div className="mb-1.5 text-[11px] uppercase tracking-[0.14em] text-glow-soft">Mastered</div>
-          <Waveform peaks={peaksAfter} color="#ff8a3d" progress={p} dim={src !== 'b'} onSeek={seek} height={52} />
+          <div className="mb-1.5 text-[12px] uppercase tracking-[0.14em] text-glow-soft">Mastered</div>
+          <Waveform peaks={peaksAfter} color="#ff8b41" progress={src === 'b' ? p : 0} dim={src !== 'b'} onSeek={() => void changeSource('b', true)} height={52} />
         </div>
       </div>
-      <p className="mt-4 text-xs text-mute">Switch between Original and Mastered while playing — position is kept so you hear the difference instantly.</p>
+      <p className="mt-4 text-[13px] text-mute">Switch between Original and Mastered while playing — position is kept so you hear the difference instantly.</p>
+      {children}
     </div>
   )
 }

@@ -53,3 +53,7 @@ All DSP runs in a Web Worker in the browser, on the real audio samples. Nothing 
 1. Deploy `server/stripe-checkout.example.ts` (or an equivalent serverless function) with `STRIPE_SECRET_KEY`.
 2. Set `VITE_STRIPE_CHECKOUT_ENDPOINT` and `VITE_STRIPE_STATUS_ENDPOINT`, then rebuild.
 Until then the checkout modal reports that payments are not connected. In `pnpm dev` only, it also offers a test unlock.
+
+### Manual mastering
+
+The result page includes an optional human-mastering request flow. It uses the visitor's IP-derived continent from `https://ipapi.co/continent_code/` to select the PayPal link and price: Europe uses `https://paypal.me/HiradG/9.99EUR` (€9.99), while the US and all other regions use `https://paypal.me/HiradG/9.99USD` ($9.99). If the lookup is unavailable, the browser locale/time zone is used as a fallback. The email and track are not submitted by the PayPal link; a secure upload and fulfillment workflow still needs to be connected before manual mastering can be delivered.
