@@ -3,6 +3,7 @@ import type { Metrics } from './analysis'
 import { ENGINE, GENRES, type GenreId } from './config'
 import type { MasterReport } from './master'
 import type { WorkerRequest } from './worker'
+import { encodeWav } from './wav'
 
 export interface Mp3Check { bitrate: number; truePeakDb: number; lufs: number; clipRuns: number; ok: boolean; trimDb: number }
 export interface MasterResult {
@@ -137,4 +138,12 @@ export async function reencode(r: MasterResult, bitrate: number): Promise<Master
   const first = await call<{ mp3: Uint8Array }>({ type: 'encode', wav: await r.wav.arrayBuffer(), bitrate, trimDb: 0 })
   const { mp3, check } = await verifiedMp3(first.mp3, r.wav, bitrate, GENRES[r.report.genre].ceilingDbtp)
   return { ...r, mp3: new Blob([mp3 as BlobPart], { type: 'audio/mpeg' }), mp3Check: check }
+}
+
+/** Re-encode a shared MP3 for a requested download bitrate. */
+export async function reencodeSharedMp3(file: Blob, bitrate: number): Promise<Blob> {
+  const decoded = await decodeMp3(await file.arrayBuffer())
+  const wav = encodeWav(decoded.channels, decoded.sampleRate, 32)
+  const result = await call<{ mp3: Uint8Array }>({ type: 'encode', wav, bitrate, trimDb: 0 }, [wav])
+  return new Blob([result.mp3 as BlobPart], { type: 'audio/mpeg' })
 }
