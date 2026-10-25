@@ -1,19 +1,30 @@
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import Waveform from './Waveform'
 
-interface Props { original: Blob; mastered: Blob; peaksBefore: Float32Array; peaksAfter: Float32Array; onStartOver: () => void; children?: ReactNode }
+interface Props { original: Blob | string; mastered: Blob | string; peaksBefore: Float32Array; peaksAfter: Float32Array; onStartOver: () => void; headerAction?: ReactNode; children?: ReactNode }
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
-export default function Player({ original, mastered, peaksBefore, peaksAfter, onStartOver, children }: Props) {
-  const urls = useMemo(() => ({ a: URL.createObjectURL(original), b: URL.createObjectURL(mastered) }), [original, mastered])
-  useEffect(() => () => { URL.revokeObjectURL(urls.a); URL.revokeObjectURL(urls.b) }, [urls])
+export default function Player({ original, mastered, peaksBefore, peaksAfter, onStartOver, headerAction, children }: Props) {
+  const urls = useMemo(() => ({
+    a: typeof original === 'string' ? { src: original, owned: false } : { src: URL.createObjectURL(original), owned: true },
+    b: typeof mastered === 'string' ? { src: mastered, owned: false } : { src: URL.createObjectURL(mastered), owned: true },
+  }), [original, mastered])
+  useEffect(() => () => {
+    if (urls.a.owned) URL.revokeObjectURL(urls.a.src)
+    if (urls.b.owned) URL.revokeObjectURL(urls.b.src)
+  }, [urls])
   const a = useRef<HTMLAudioElement>(null), b = useRef<HTMLAudioElement>(null)
   const [src, setSrc] = useState<'a' | 'b'>('b')
   const [playing, setPlaying] = useState(false)
   const [t, setT] = useState(0), [dur, setDur] = useState(0)
   const fadeRef = useRef<{ frame: number; from: HTMLAudioElement; to: HTMLAudioElement } | null>(null)
   const active = () => (src === 'a' ? a.current : b.current)
+
+  useEffect(() => {
+    const el = active()
+    if (el && el.readyState >= 1) setDur(el.duration)
+  }, [src])
 
   useEffect(() => {
     let raf = 0
@@ -99,12 +110,12 @@ export default function Player({ original, mastered, peaksBefore, peaksAfter, on
 
   return (
     <div className="rounded-2xl border border-line bg-panel p-5">
-      <audio ref={a} src={urls.a} preload="auto" onEnded={() => setPlaying(false)} />
-      <audio ref={b} src={urls.b} preload="auto" onLoadedMetadata={(e) => setDur(e.currentTarget.duration)} onEnded={() => setPlaying(false)} />
+      <audio ref={a} src={urls.a.src} preload="auto" onLoadedMetadata={(e) => { if (src === 'a') setDur(e.currentTarget.duration) }} onEnded={() => setPlaying(false)} />
+      <audio ref={b} src={urls.b.src} preload="auto" onLoadedMetadata={(e) => { if (src === 'b') setDur(e.currentTarget.duration) }} onEnded={() => setPlaying(false)} />
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <span className="num text-left text-[15px] text-mute">{fmt(t)} / {fmt(dur)}</span>
         <div className="flex items-center justify-center gap-4">
-          <button onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} className="grid size-12 shrink-0 place-items-center rounded-full bg-white text-ink transition hover:scale-105 hover:bg-zinc-200">
+          <button onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} className="grid size-12 shrink-0 place-items-center rounded-full bg-white/10 text-white transition hover:scale-105 hover:bg-white/15">
           {playing ? (
             <svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="1" width="3.5" height="12" rx="1" fill="currentColor" /><rect x="8.5" y="1" width="3.5" height="12" rx="1" fill="currentColor" /></svg>
           ) : (
@@ -119,19 +130,19 @@ export default function Player({ original, mastered, peaksBefore, peaksAfter, on
           ))}
           </div>
         </div>
-        <button onClick={onStartOver} className="justify-self-end rounded-full border border-line px-4 py-2 text-[15px] text-mute transition hover:border-white/20 hover:text-white">Start over</button>
+        <div className="justify-self-end">{headerAction ?? <button onClick={onStartOver} className="rounded-full border border-line px-4 py-2 text-[15px] text-mute transition hover:border-white/20 hover:text-white">Start over</button>}</div>
       </div>
       <div className="mt-5 space-y-3">
         <div>
           <div className="mb-1.5 text-[12px] uppercase tracking-[0.14em] text-mute">Original</div>
-          <Waveform peaks={peaksBefore} color="#ffffff" progress={src === 'a' ? p : 0} dim={src !== 'a'} onSeek={() => void changeSource('a', true)} height={52} />
+          <Waveform peaks={peaksBefore} color="#ffffff" progress={src === 'a' ? p : 0} dim={src !== 'a'} onSeek={() => void changeSource('a', true)} height={80} />
         </div>
         <div>
           <div className="mb-1.5 text-[12px] uppercase tracking-[0.14em] text-glow-soft">Mastered</div>
-          <Waveform peaks={peaksAfter} color="#ff8b41" progress={src === 'b' ? p : 0} dim={src !== 'b'} onSeek={() => void changeSource('b', true)} height={52} />
+          <Waveform peaks={peaksAfter} color="#ff8b41" progress={src === 'b' ? p : 0} dim={src !== 'b'} onSeek={() => void changeSource('b', true)} height={80} />
         </div>
       </div>
-      <p className="mt-4 text-[13px] text-mute">Switch between Original and Mastered while playing — position is kept so you hear the difference instantly.</p>
+      <p className="mt-4 text-[13px] text-mute">Switch between Original and Mastered while playing.</p>
       {children}
     </div>
   )
