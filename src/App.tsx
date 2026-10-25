@@ -12,6 +12,24 @@ type Status = 'ready' | 'queued' | 'processing' | 'done' | 'error'
 interface Track { id: string; file: File; genre: GenreId; status: Status; stage: string; pct: number; error?: string; result?: MasterResult; encoding?: boolean }
 interface ShareEntry { id: string; fileName: string; title: string; url: string }
 
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    const field = document.createElement('textarea')
+    field.value = text
+    field.setAttribute('readonly', '')
+    field.style.position = 'fixed'
+    field.style.opacity = '0'
+    document.body.appendChild(field)
+    field.select()
+    const copied = document.execCommand('copy')
+    field.remove()
+    return copied
+  }
+}
+
 const base = (name: string) => safeName(name.replace(/\.[^.]+$/, ''))
 const mb = (b: number) => `${(b / 1024 / 1024).toFixed(1)} MB`
 
@@ -36,6 +54,8 @@ export default function App() {
     catch { return [] }
   })
   const [sharingTrack, setSharingTrack] = useState<string | null>(null)
+  const [shareLink, setShareLink] = useState<string | null>(null)
+  const [shareCopied, setShareCopied] = useState(false)
   const [zipping, setZipping] = useState(false)
   const [open, setOpen] = useState<string | null>(null)
   const input = useRef<HTMLInputElement>(null)
@@ -111,14 +131,20 @@ export default function App() {
     try {
       const shared = await createSharedResult({ original: track.file, mastered: track.result.mp3, peaksBefore: track.result.peaksBefore, peaksAfter: track.result.peaksAfter })
       setShareEntries((entries) => [{ id: crypto.randomUUID(), fileName: track.file.name, ...shared }, ...entries])
+      setShareLink(shared.url)
+      setShareCopied(await copyText(shared.url))
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Could not create a share link. Please try again.')
     } finally { setSharingTrack(null) }
   }
 
   const copyShareLink = async (url: string) => {
-    try { await navigator.clipboard.writeText(url) }
-    catch { setNotice('Could not copy automatically. Select and copy the share link from the table.') }
+    if (await copyText(url)) {
+      setShareLink(url)
+      setShareCopied(true)
+    } else {
+      setNotice('Could not copy automatically. Select and copy the share link from the table.')
+    }
   }
 
   const openManualMasteringPage = (track: Track) => {
@@ -319,6 +345,7 @@ export default function App() {
         </div>
       )}
       {checkout && <CheckoutModal count={done.length} onClose={() => setCheckout(false)} onPaid={() => { setPaid(true); setCheckout(false); void downloadZip() }} />}
+      {shareLink && <ShareLinkModal url={shareLink} copied={shareCopied} onCopy={async () => setShareCopied(await copyText(shareLink))} onClose={() => setShareLink(null)} />}
         {shareEntries.length > 0 && <section className="mx-auto mb-12 mt-8 max-w-5xl rounded-2xl border border-line bg-panel p-5 sm:p-6">
           <h2 className="text-[19px] font-medium">Shared result links</h2>
           <p className="mt-1 text-[13px] text-mute">Short names are based on each original filename, with a unique suffix.</p>
@@ -329,6 +356,37 @@ export default function App() {
             </table>
           </div>
         </section>}
+    </div>
+  )
+}
+
+function ShareLinkModal({ url, copied, onCopy, onClose }: { url: string; copied: boolean; onCopy: () => void; onClose: () => void }) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby="share-title" className="w-full max-w-lg rounded-3xl border border-line bg-raised p-6 shadow-2xl sm:p-7" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-start gap-3">
+          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-good/15 text-good">
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4L19 6" /></svg>
+          </div>
+          <div>
+            <h2 id="share-title" className="text-[19px] font-medium">{copied ? 'Link copied' : 'Your share link is ready'}</h2>
+            <p className="mt-1 text-[15px] text-mute">Share this link so others can listen to both versions.</p>
+          </div>
+        </div>
+        <div className="mt-5 flex items-center gap-2 rounded-xl border border-line bg-panel p-2">
+          <input aria-label="Share link" readOnly value={url} onFocus={(event) => event.currentTarget.select()} className="min-w-0 flex-1 bg-transparent px-2 py-2 text-[14px] text-white outline-none" />
+          <button onClick={() => void onCopy()} aria-label={copied ? 'Copy link again' : 'Copy link'} title={copied ? 'Copied — click to copy again' : 'Copy link'} className="grid size-10 shrink-0 place-items-center rounded-lg bg-glow text-ink transition hover:bg-[#e65f0c]">
+            {copied ? <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4L19 6" /></svg> : <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="8" width="13" height="13" rx="2" /><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" /></svg>}
+          </button>
+        </div>
+        <button onClick={onClose} className="mt-5 w-full rounded-full border border-line py-3 text-[15px] text-mute transition hover:bg-white/5 hover:text-white">Done</button>
+      </div>
     </div>
   )
 }

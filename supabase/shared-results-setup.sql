@@ -50,5 +50,4 @@ create policy "Allow uploads to shared-results bucket"
     bucket_id = 'share-results'
     and name ~* '^[a-z0-9][a-z0-9-]{0,69}-[a-f0-9]{6}/(original\.(wav|mp3)|mastered\.mp3)$'
     and storage.extension(name) in ('wav', 'mp3')
-    and coalesce((metadata->>'size')::bigint, 0) between 1 and 52428800
   );
