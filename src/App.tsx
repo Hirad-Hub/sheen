@@ -345,8 +345,8 @@ function ShareLinkModal({ url, copied, onCopy, onClose }: { url: string; copied:
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby="share-title" className="w-full max-w-lg rounded-3xl border border-line bg-raised p-6 shadow-2xl sm:p-7" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-start gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-glow/15 text-glow">
-            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="8" width="13" height="13" rx="2" /><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" /></svg>
+          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-good/25 text-good">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" /></svg>
           </div>
           <div>
             <h2 id="share-title" className="text-[19px] font-medium">{copied ? 'Link copied' : 'Your share link is ready'}</h2>
