@@ -10,7 +10,6 @@ import { createSharedResult } from './share/results'
 
 type Status = 'ready' | 'queued' | 'processing' | 'done' | 'error'
 interface Track { id: string; file: File; genre: GenreId; status: Status; stage: string; pct: number; error?: string; result?: MasterResult; encoding?: boolean }
-interface ShareEntry { id: string; fileName: string; title: string; url: string }
 
 async function copyText(text: string) {
   try {
@@ -49,10 +48,6 @@ export default function App() {
   const [drag, setDrag] = useState(false)
   const [checkout, setCheckout] = useState(false)
   const [paid, setPaid] = useState(false)
-  const [shareEntries, setShareEntries] = useState<ShareEntry[]>(() => {
-    try { return JSON.parse(localStorage.getItem('sheen-share-links') || '[]') as ShareEntry[] }
-    catch { return [] }
-  })
   const [sharingTrack, setSharingTrack] = useState<string | null>(null)
   const [shareLink, setShareLink] = useState<string | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
@@ -60,10 +55,6 @@ export default function App() {
   const [open, setOpen] = useState<string | null>(null)
   const input = useRef<HTMLInputElement>(null)
   const running = useRef(false)
-
-  useEffect(() => {
-    try { localStorage.setItem('sheen-share-links', JSON.stringify(shareEntries)) } catch { /* Keep sharing usable if local storage is unavailable. */ }
-  }, [shareEntries])
 
   const patch = (id: string, p: Partial<Track>) => setTracks((ts) => ts.map((t) => (t.id === id ? { ...t, ...p } : t)))
 
@@ -130,21 +121,11 @@ export default function App() {
     setSharingTrack(track.id); setNotice(null)
     try {
       const shared = await createSharedResult({ original: track.file, mastered: track.result.mp3, peaksBefore: track.result.peaksBefore, peaksAfter: track.result.peaksAfter })
-      setShareEntries((entries) => [{ id: crypto.randomUUID(), fileName: track.file.name, ...shared }, ...entries])
       setShareLink(shared.url)
       setShareCopied(await copyText(shared.url))
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Could not create a share link. Please try again.')
     } finally { setSharingTrack(null) }
-  }
-
-  const copyShareLink = async (url: string) => {
-    if (await copyText(url)) {
-      setShareLink(url)
-      setShareCopied(true)
-    } else {
-      setNotice('Could not copy automatically. Select and copy the share link from the table.')
-    }
   }
 
   const openManualMasteringPage = (track: Track) => {
@@ -310,15 +291,18 @@ export default function App() {
                           </div>
                         )}
                       </Player>
-                      <div className="rounded-2xl border border-line bg-panel p-5">
-                        <h3 className="text-center text-[19px] font-medium">Technical details</h3>
+                      <details className="group rounded-2xl border border-line bg-panel p-5">
+                        <summary className="flex cursor-pointer list-none items-center justify-center gap-3 text-center [&::-webkit-details-marker]:hidden">
+                          <span className="text-[19px] font-medium">Technical details</span>
+                          <svg aria-hidden="true" className="size-4 text-mute transition-transform group-open:rotate-180" viewBox="0 0 20 20" fill="none"><path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        </summary>
                         <p className="mt-1 text-center text-[15px] text-mute">A complete measurement and verification report for your master.</p>
                         <div className="mt-4 grid gap-4 lg:grid-cols-2">
                           <StatsTable r={t.result.report} />
                           <Checks r={t.result.report} mp3={t.result.mp3Check} />
                         </div>
                         <div className="mt-4"><Decisions r={t.result.report} /></div>
-                      </div>
+                      </details>
                     </div>
                   )}
                 </li>
@@ -346,16 +330,6 @@ export default function App() {
       )}
       {checkout && <CheckoutModal count={done.length} onClose={() => setCheckout(false)} onPaid={() => { setPaid(true); setCheckout(false); void downloadZip() }} />}
       {shareLink && <ShareLinkModal url={shareLink} copied={shareCopied} onCopy={async () => setShareCopied(await copyText(shareLink))} onClose={() => setShareLink(null)} />}
-        {phase !== 'work' && shareEntries.length > 0 && <section className="mx-auto mb-12 mt-8 max-w-5xl rounded-2xl border border-line bg-panel p-5 sm:p-6">
-          <h2 className="text-[19px] font-medium">Shared result links</h2>
-          <p className="mt-1 text-[13px] text-mute">Short names are based on each original filename, with a unique suffix.</p>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[620px] border-collapse text-left text-[13px]">
-              <thead><tr className="border-b border-line text-mute"><th className="pb-2 pr-4 font-medium">Original file</th><th className="pb-2 pr-4 font-medium">Short name</th><th className="pb-2 pr-4 font-medium">Share link</th><th className="pb-2 text-right font-medium">Action</th></tr></thead>
-              <tbody>{shareEntries.map((entry) => <tr key={entry.id} className="border-b border-line/60 last:border-0"><td className="max-w-[180px] truncate py-3 pr-4">{entry.fileName}</td><td className="whitespace-nowrap py-3 pr-4 text-mute">{entry.title}</td><td className="max-w-[260px] truncate py-3 pr-4"><a href={entry.url} target="_blank" rel="noreferrer" className="text-glow-soft underline decoration-glow/30 underline-offset-4 hover:decoration-glow">{entry.url}</a></td><td className="py-3 text-right"><button onClick={() => void copyShareLink(entry.url)} className="rounded-full border border-line px-3 py-1.5 transition hover:border-white/25">Copy</button></td></tr>)}</tbody>
-            </table>
-          </div>
-        </section>}
     </div>
   )
 }

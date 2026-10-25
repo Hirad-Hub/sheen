@@ -99,7 +99,7 @@ export function Verdict({ r }: { r: MasterReport }) {
       <div>
         <h2 className="text-[18px] font-medium tracking-tight">Your song is ready for streaming</h2>
         <p className="mt-1 text-[15px] text-[#B4B4B4]">
-          Mastered to {r.after.lufs.toFixed(1)} LUFS-I with peaks safely under −1 dBTP. It will play cleanly on Spotify, Apple Music, YouTube and every other platform.
+          Mastered to {r.after.lufs.toFixed(1)} LUFS-I with peaks under −1 dBTP, ready for Spotify, YouTube, and all major streaming platforms.
         </p>
       </div>
     </div>

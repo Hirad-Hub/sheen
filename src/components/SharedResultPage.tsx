@@ -62,7 +62,7 @@ export default function SharedResultPage({ slug }: { slug: string }) {
       <h1 className="mt-2 break-words text-3xl font-semibold tracking-tight sm:text-4xl">{result.title}</h1>
       <p className="mt-2 text-[15px] text-mute">Listen to the original and mastered versions below.</p>
       <div className="mt-6">
-        <Player original={publicAudioUrl(result.original_path)} mastered={publicAudioUrl(result.mastered_path)} peaksBefore={Float32Array.from(result.peaks_before)} peaksAfter={Float32Array.from(result.peaks_after)} onStartOver={() => { window.location.href = '/' }}>
+        <Player original={publicAudioUrl(result.original_path)} mastered={publicAudioUrl(result.mastered_path)} peaksBefore={Float32Array.from(result.peaks_before)} peaksAfter={Float32Array.from(result.peaks_after)} onStartOver={() => { window.location.href = '/' }} headerAction={<span aria-hidden="true" />}>
           <div className="border-t border-line pt-5">
             <div className="mt-4 text-center">
               <div className="flex flex-wrap justify-center gap-2">
@@ -82,9 +82,6 @@ export default function SharedResultPage({ slug }: { slug: string }) {
                 {upgrading ? 'Preparing…' : 'Upgrade to Human Mastering'}
               </button>
             </div>
-            <div className="text-center">
-              <a href={`${publicAudioUrl(result.original_path)}?download=${encodeURIComponent(result.original_file_name)}`} className="text-[13px] text-mute underline decoration-white/20 underline-offset-4 transition hover:text-white">Download original</a>
-            </div>
             {actionError && <p role="alert" className="mt-4 text-center text-[14px] text-bad">{actionError}</p>}
           </div>
         </Player>
@@ -94,5 +91,5 @@ export default function SharedResultPage({ slug }: { slug: string }) {
 }
 
 function Shell({ children }: { children: ReactNode }) {
-  return <div className="min-h-screen bg-ink text-white"><header className="mx-auto flex max-w-5xl items-center px-6 py-6"><a href="/" className="flex items-center gap-2.5"><span className="flex h-6 items-end gap-[3px]">{[10, 18, 24, 14, 20].map((height) => <span key={height} className="w-[3px] rounded-full bg-glow" style={{ height }} />)}</span><span className="text-[19px] font-semibold tracking-tight">Sheen</span></a><span className="ml-3 hidden text-[15px] text-mute sm:inline">Shared mastering result</span></header><main className="mx-auto max-w-3xl px-6 pb-12 pt-4">{children}</main></div>
+  return <div className="min-h-screen bg-ink text-white"><header className="mx-auto flex max-w-5xl items-center px-6 py-6"><a href="/" className="flex items-center gap-2.5"><span className="flex h-6 items-end gap-[3px]">{[10, 18, 24, 14, 20].map((height) => <span key={height} className="w-[3px] rounded-full bg-glow" style={{ height }} />)}</span><span className="text-[19px] font-semibold tracking-tight">Sheen</span></a><span className="ml-3 hidden text-[15px] text-mute sm:inline">Shared mastering result</span><a href="/" className="ml-auto rounded-full border border-line px-4 py-2 text-[14px] text-mute transition hover:border-white/25 hover:text-white">Start over</a></header><main className="mx-auto max-w-3xl px-6 pb-12 pt-4">{children}</main></div>
 }
