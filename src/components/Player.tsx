@@ -124,7 +124,7 @@ export default function Player({ original, mastered, peaksBefore, peaksAfter, on
           </button>
           <div className="flex rounded-full border border-line bg-ink p-1 text-[15px]">
           {(['a', 'b'] as const).map((s) => (
-            <button key={s} onClick={() => switchTo(s)} className={`rounded-full px-4 py-1.5 transition ${src === s ? (s === 'b' ? 'bg-glow text-ink font-medium' : 'bg-white/90 text-ink font-medium') : 'text-mute hover:text-white'}`}>
+            <button key={s} onClick={() => switchTo(s)} className={`rounded-full px-4 py-1.5 transition ${src === s ? (s === 'b' ? 'bg-glow text-white font-medium' : 'bg-white/90 text-ink font-medium') : 'text-mute hover:text-white'}`}>
               {s === 'a' ? 'Original' : 'Mastered'}
             </button>
           ))}

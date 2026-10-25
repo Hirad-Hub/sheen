@@ -75,7 +75,7 @@ export default function SharedResultPage({ slug }: { slug: string }) {
               </div>
             </div>
             <div className="mt-6 flex flex-wrap justify-center gap-3 pb-2">
-              <button disabled={downloading} onClick={() => void downloadMaster()} className="rounded-full bg-glow px-8 py-4 text-base font-medium text-ink transition hover:bg-[#e65f0c] disabled:cursor-wait disabled:opacity-60">
+              <button disabled={downloading} onClick={() => void downloadMaster()} className="rounded-full bg-glow px-8 py-4 text-base font-medium text-white transition hover:bg-[#e65f0c] disabled:cursor-wait disabled:opacity-60">
                 {downloading ? 'Preparing download…' : `Download MP3 · ${bitrate} kbps`}
               </button>
               <button disabled={upgrading} onClick={() => void upgradeToHumanMastering()} className="rounded-full bg-white px-5 py-4 text-base font-medium text-black transition hover:bg-zinc-200 disabled:cursor-wait disabled:opacity-60 sm:px-8">

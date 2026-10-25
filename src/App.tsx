@@ -227,7 +227,7 @@ export default function App() {
             </div>
 
             <div className="mt-10 flex justify-center">
-              <button onClick={start} className="w-full rounded-full bg-glow py-4 text-base font-medium text-ink transition hover:bg-[#e65f0c] sm:w-auto sm:px-12">
+              <button onClick={start} className="w-full rounded-full bg-glow py-4 text-base font-medium text-white transition hover:bg-[#e65f0c] sm:w-auto sm:px-12">
                 Master {tracks.length === 1 ? 'my song' : `${tracks.length} songs`}
               </button>
             </div>
@@ -280,7 +280,7 @@ export default function App() {
                           <BitratePicker value={bitrate} onChange={changeBitrate} hasWav={t.result.sourceKind === 'wav'} compact />
                           <div className="mt-8 flex flex-wrap justify-center gap-3 pb-4">
                             {outputs(t, bitrate).map((f) => (
-                              <button key={f.name} disabled={t.encoding} onClick={() => downloadBlob(f.blob, f.name)} className="rounded-full bg-glow px-8 py-4 text-base font-medium text-ink transition hover:bg-[#e65f0c] disabled:opacity-50">
+                              <button key={f.name} disabled={t.encoding} onClick={() => downloadBlob(f.blob, f.name)} className="rounded-full bg-glow px-8 py-4 text-base font-medium text-white transition hover:bg-[#e65f0c] disabled:opacity-50">
                                 Download {f.label}
                               </button>
                             ))}
@@ -322,7 +322,7 @@ export default function App() {
             <select value={bitrate} disabled={encoding} onChange={(e) => changeBitrate(Number(e.target.value))} className="ml-auto rounded-full border border-line bg-panel px-3 py-2 text-[15px]">
               {MP3_BITRATES.map((b) => <option key={b} value={b}>MP3 {b} kbps</option>)}
             </select>
-            <button disabled={zipping || encoding} onClick={() => (paid ? downloadZip() : setCheckout(true))} className="rounded-full bg-glow px-6 py-3 text-[15px] font-medium text-ink transition hover:bg-[#e65f0c] disabled:opacity-50">
+            <button disabled={zipping || encoding} onClick={() => (paid ? downloadZip() : setCheckout(true))} className="rounded-full bg-glow px-6 py-3 text-[15px] font-medium text-white transition hover:bg-[#e65f0c] disabled:opacity-50">
               {zipping ? 'Preparing ZIP…' : encoding ? 'Encoding…' : 'Download all (ZIP)'}
             </button>
           </div>
@@ -355,11 +355,11 @@ function ShareLinkModal({ url, copied, onCopy, onClose }: { url: string; copied:
         </div>
         <div className="mt-5 flex items-center gap-2 rounded-xl border border-line bg-panel p-2">
           <input aria-label="Share link" readOnly value={url} onFocus={(event) => event.currentTarget.select()} className="min-w-0 flex-1 bg-transparent px-2 py-2 text-[14px] text-white outline-none" />
-          <button onClick={() => void onCopy()} aria-label="Copy link" title={copied ? 'Copied — click to copy again' : 'Copy link'} className="grid size-10 shrink-0 place-items-center rounded-lg bg-glow text-ink transition hover:bg-[#e65f0c]">
+          <button onClick={() => void onCopy()} aria-label="Copy link" title={copied ? 'Copied — click to copy again' : 'Copy link'} className="grid size-10 shrink-0 place-items-center rounded-lg bg-glow text-white transition hover:bg-[#e65f0c]">
             <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="8" width="13" height="13" rx="2" /><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" /></svg>
           </button>
         </div>
-        <button onClick={onClose} className="mt-5 w-full rounded-full bg-glow py-3 text-[15px] font-medium text-ink transition hover:bg-[#e65f0c]">Done</button>
+        <button onClick={onClose} className="mt-5 w-full rounded-full bg-glow py-3 text-[15px] font-medium text-white transition hover:bg-[#e65f0c]">Done</button>
       </div>
     </div>
   )

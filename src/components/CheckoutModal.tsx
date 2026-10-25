@@ -35,7 +35,7 @@ export default function CheckoutModal({ count, onClose, onPaid }: Props) {
         </ul>
         {err && <p className="mt-4 rounded-xl bg-bad/10 px-3 py-2 text-[15px] text-bad">{err}</p>}
         {paymentsConfigured ? (
-          <button disabled={busy} onClick={pay} className="mt-6 w-full rounded-full bg-glow py-3.5 text-[17px] font-medium text-ink transition hover:bg-[#e65f0c] disabled:opacity-60">
+          <button disabled={busy} onClick={pay} className="mt-6 w-full rounded-full bg-glow py-3.5 text-[17px] font-medium text-white transition hover:bg-[#e65f0c] disabled:opacity-60">
             {busy ? 'Waiting for payment…' : `Pay ${formatTotal(count)}`}
           </button>
         ) : (
