@@ -1,7 +1,7 @@
 import { safeName } from '../audio/exportZip'
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/$/, '')
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
+const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined
 const SHARE_BASE_URL = (import.meta.env.VITE_SHARE_BASE_URL as string | undefined)?.replace(/\/$/, '')
 const BUCKET = 'share-results'
 export const FREE_FILE_LIMIT = 50 * 1024 * 1024
